@@ -21,8 +21,12 @@ RUN apt-get update && apt-get -yqq install wget \
     && echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | tee /etc/apt/sources.list.d/pgdg.list \
     && apt-get update \
     && apt-get -y install postgresql-client-$POSTGRES_VERSION \
+    && docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Install extensions
+RUN docker-php-ext-install pdo pdo_mysql pcntl pdo_pgsql pgsql mysqli
 
 COPY apache/default.apache.conf /etc/apache2/sites-available/000-default.conf
 
@@ -36,12 +40,12 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
 WORKDIR /var/www/html
 
-RUN groupadd --force -g $WWWGROUP brightmoon
-RUN useradd -ms /bin/bash --no-user-group -g $WWWGROUP -u 1337 brightmoon
+RUN groupadd --force -g $WWWGROUP phpdocker
+RUN useradd -ms /bin/bash --no-user-group -g $WWWGROUP -u 1337 phpdocker
 
 COPY start-container /usr/local/bin/start-container
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY php.ini /etc/php/8.2/cli/conf.d/brightmoon.ini
+COPY php.ini /etc/php/8.2/cli/conf.d/phpdocker.ini
 
 RUN chmod +x /usr/local/bin/start-container
 
