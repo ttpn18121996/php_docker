@@ -3,6 +3,7 @@ FROM php:8.2-apache
 ARG WWWGROUP
 ARG NODE_VERSION=19
 ARG POSTGRES_VERSION=15
+ARG APP_HOST=localhost
 
 # Install packages
 RUN apt-get update && apt-get install -y sudo git curl zip unzip supervisor sqlite3 libcap2-bin libpng-dev libpq-dev libzip-dev python2 vim
@@ -14,6 +15,11 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
     && mkdir -p /etc/apt/keyrings/ \
     && apt-get update \
     && apt-get install -y default-mysql-client
+
+# Install imagick
+RUN apt-get update && apt-get install -y libmagickwand-dev --no-install-recommends && rm -rf /var/lib/apt/lists/*
+RUN printf "\n" | pecl install imagick
+RUN docker-php-ext-enable imagick
 
 # Install the pgsql client
 RUN apt-get update && apt-get -yqq install wget \
@@ -29,9 +35,12 @@ RUN apt-get update && apt-get -yqq install wget \
 RUN docker-php-ext-install pdo pdo_mysql pcntl pdo_pgsql pgsql mysqli gd zip
 
 COPY apache/default.apache.conf /etc/apache2/sites-available/000-default.conf
+COPY certs/ssl.crt /etc/apache2/ssl/${APP_HOST}.crt
+COPY certs/ssl.key /etc/apache2/ssl/${APP_HOST}.key
+RUN mkdir -p /var/run/apache2/
 
 # Enable headers/rewrite module for Apache
-RUN a2enmod headers rewrite
+RUN a2enmod headers rewrite ssl
 
 # Set document root for Apache
 ENV APACHE_DOCUMENT_ROOT /var/www/html

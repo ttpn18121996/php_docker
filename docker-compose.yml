@@ -9,6 +9,7 @@ services:
         WWWGROUP: '${WWWGROUP}'
         NODE_VERSION: '${NODE_VERSION}'
         POSTGRES_VERSION: '${POSTGRES_VERSION}'
+        APP_HOST: '${APP_HOST}'
     volumes:
       - ./:/var/www/html
     ports:
